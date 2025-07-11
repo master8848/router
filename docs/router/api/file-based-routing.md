@@ -79,6 +79,12 @@ src/routes
 
 This option is used to ignore specific files and directories in the route directory. It can be used in regular expression format. For example, `.((css|const).ts)|test-page` will ignore files / directories with names containing `.css.ts`, `.const.ts` or `test-page`.
 
+The router generator filters files and directories in the following order:
+1. Route groups (directories wrapped in parentheses, e.g. `(group)`) are always included.
+2. Files and directories starting with a `.` are ignored.
+3. Files and directories starting with the `routeFileIgnorePrefix` are ignored.
+4. Files and directories matching the `routeFileIgnorePattern` are ignored.
+
 By default, this value is set to `undefined`.
 
 ### `routeFilePrefix`

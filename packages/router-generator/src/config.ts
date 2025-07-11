@@ -9,7 +9,9 @@ export const baseConfigSchema = z.object({
   virtualRouteConfig: virtualRootRouteSchema.or(z.string()).optional(),
   routeFilePrefix: z.string().optional(),
   routeFileIgnorePrefix: z.string().optional().default('-'),
-  routeFileIgnorePattern: z.string().optional(),
+  routeFileIgnorePattern: z
+    .union([z.string(), z.function().args(z.string()).returns(z.boolean())])
+    .optional(),
   routesDirectory: z.string().optional().default('./src/routes'),
   quoteStyle: z.enum(['single', 'double']).optional().default('single'),
   semicolons: z.boolean().optional().default(false),

@@ -40,7 +40,11 @@ export async function getRouteNodes(
   const { routeFilePrefix, routeFileIgnorePrefix, routeFileIgnorePattern } =
     config
   const logger = logging({ disabled: config.disableLogging })
-  const routeFileIgnoreRegExp = new RegExp(routeFileIgnorePattern ?? '', 'g')
+
+  const routeFileIgnoreRegExp = new RegExp(
+    typeof routeFileIgnorePattern === 'string' ? routeFileIgnorePattern : '',
+    'g',
+  )
 
   const routeNodes: Array<RouteNode> = []
   const allPhysicalDirectories: Array<string> = []
@@ -50,19 +54,30 @@ export async function getRouteNodes(
     let dirList = await fsp.readdir(fullDir, { withFileTypes: true })
 
     dirList = dirList.filter((d) => {
+      if (typeof routeFileIgnorePattern === 'function') {
+        const calculatedIfFileIsUnderIgnoredPattern = routeFileIgnorePattern(
+          d.name,
+        )
+        if (typeof calculatedIfFileIsUnderIgnoredPattern !== 'boolean') {
+          const errorMessage = `A route configuration for a route group was found at \`${filePath}\`. This is not supported. Did you mean to use a layout/pathless route instead?`
+          logger.error(`ERROR: ${errorMessage}`)
+          throw new Error(errorMessage)
+        }
+        if (calculatedIfFileIsUnderIgnoredPattern) {
+          return false
+        }
+      }
       if (
         d.name.startsWith('.') ||
-        (routeFileIgnorePrefix && d.name.startsWith(routeFileIgnorePrefix))
+        (routeFileIgnorePrefix && d.name.startsWith(routeFileIgnorePrefix)) ||
+        (typeof routeFileIgnorePattern === 'string' &&
+          !d.name.match(routeFileIgnoreRegExp))
       ) {
         return false
       }
 
       if (routeFilePrefix) {
         return d.name.startsWith(routeFilePrefix)
-      }
-
-      if (routeFileIgnorePattern) {
-        return !d.name.match(routeFileIgnoreRegExp)
       }
 
       return true
